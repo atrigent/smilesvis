@@ -335,9 +335,10 @@ class Atom:
                     types[new_type] = types['single']
 
 
-                self.bonds = [('single-left', types['single-left']),
-                              ('single-right', types['single-right']),
-                              ('double', types['double'])]
+                self.bonds = [(t, types[t])
+                              for t in ['single-left',
+                                        'single-right',
+                                        'double']]
 
         self.geometry = get_geometry(self.steric_num, self.lone_pairs)
 
