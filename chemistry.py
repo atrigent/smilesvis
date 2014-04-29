@@ -337,13 +337,13 @@ class Atom:
             if self.bond_counts['single-left'] > 0 or self.bond_counts['single-right'] > 0:
                 types = {bond.bond_type: bond.atom for bond in self.bonds}
                 if 'single' in types:
-                    new_type = None
+                    new_direction = None
                     if 'single-left' in types:
-                        new_type = 'single-right'
+                        new_direction = 'right'
                     else:
-                        new_type = 'single-left'
+                        new_direction = 'left'
 
-                    types[new_type] = types['single']
+                    types['single-' + new_direction] = types['single']
                     del types['single']
 
                 self.bonds = [Bond(t, types[t])
