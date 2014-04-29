@@ -60,12 +60,12 @@ class MoleculeVisualizer:
         triple_diff = 2 * self.bond_width + self.bond_width/2
         quadruple_diffs = [double_diff, -double_diff]
 
-        diffs = {
-            'single': [(0, 0)],
-            'double': [(double_diff, 0), (-double_diff, 0)],
-            'triple': [(triple_diff, 0), (0, 0), (-triple_diff, 0)],
-            'quadruple': product(quadruple_diffs, quadruple_diffs)
-        }[bond_type]
+        diffs = [
+            [(0, 0)],
+            [(double_diff, 0), (-double_diff, 0)],
+            [(triple_diff, 0), (0, 0), (-triple_diff, 0)],
+            product(quadruple_diffs, quadruple_diffs)
+        ][bond_type-1]
 
         cylinder_default = Vector(0, 0, 1)
         vec = end - start
@@ -129,7 +129,7 @@ class MoleculeVisualizer:
             atom.rotate(angle, rv)
 
             bond_with_previous = atom.bonds[atom.find_bond_to(previous)].order()
-            if bond_with_previous == 'single':
+            if bond_with_previous == 1:
                 if self.randomize_single_bonds:
                     atom.rotate(random.randrange(0, 360), rotate_to)
                 else:

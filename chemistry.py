@@ -61,22 +61,22 @@ elements = [
             'steric_num': 4,
             'lone_pairs': 0
         }, { # sp2
-            'double': 1,
+            2: 1,
             'steric_num': 3,
             'lone_pairs': 0
         }, { # sp
-            'double': 2,
+            2: 2,
             'steric_num': 2,
             'lone_pairs': 0,
         }, { # also sp
-            'triple': 1,
+            3: 1,
             'steric_num': 2,
             'lone_pairs': 0
         }
     ]),
     Element('N', 'Nitrogen', True, (0, 0, 1), [
         {
-            'double': 1,
+            2: 1,
             'steric_num': 3,
             'lone_pairs': 1
         }, {
@@ -86,7 +86,7 @@ elements = [
     ]),
     Element('O', 'Oxygen', True, (1, 0, 0), [
         {
-            'double': 1,
+            2: 1,
             'steric_num': 3,
             'lone_pairs': 2
         }, {
@@ -108,7 +108,7 @@ elements = [
     Element('P', 'Phosphorus', True, None, None),
     Element('S', 'Sulfur', True, (0xdd/0xff, 0xdd/0xff, 0), [
         {
-            'double': 1,
+            2: 1,
             'steric_num': 3,
             'lone_pairs': 1
         }, {
@@ -118,7 +118,7 @@ elements = [
             'steric_num': 6,
             'lone_pairs': 0
         }, {
-            'double': 3,
+            2: 3,
             'steric_num': 3,
             'lone_pairs': 0
         }
@@ -246,7 +246,10 @@ class Bond:
         self.atom = atom
 
     def order(self):
-        return self.bond_type.split('-')[0]
+        try:
+            return self.bond_type[0]
+        except TypeError:
+            return self.bond_type
 
     def replace_atom(self, oldatom, newatom):
         if self.atom == oldatom:
@@ -275,12 +278,12 @@ class Atom:
                                                 cur_hybrid['lone_pairs'])
 
                 non_singles = 0
-                for bond_type in ['double', 'triple', 'quadruple']:
-                    if bond_type in cur_hybrid:
-                        condition = condition and self.bond_counts[bond_type] == cur_hybrid[bond_type]
-                        non_singles += cur_hybrid[bond_type]
+                for key, val in cur_hybrid.items():
+                    if type(key) is int and key > 1:
+                        condition = condition and self.bond_counts[key] == val
+                        non_singles += val
 
-                condition = condition and self.bond_counts['single'] == len(self.bonds) - non_singles
+                condition = condition and self.bond_counts[1] == len(self.bonds) - non_singles
 
                 if condition:
                     hybridization = cur_hybrid
@@ -326,36 +329,36 @@ class Atom:
                 self.bonds[1:] = reversed(self.bonds[1:])
 
         if (self.steric_num == 3 and self.lone_pairs == 0 and
-            self.bond_counts['double'] == 1 and
-            self.bond_counts['single'] == 2):
+            self.bond_counts[2] == 1 and
+            self.bond_counts[1] == 2):
             # Deal with trigonal planar stereochemistry
 
-            if self.bond_counts['single-left'] > 1 or self.bond_counts['single-right'] > 1:
+            if self.bond_counts[1, 'left'] > 1 or self.bond_counts[1, 'right'] > 1:
                 raise RuntimeError('Inconsistent trigonal planar with double '
                                    'bond stereochemistry specification!')
 
-            if self.bond_counts['single-left'] > 0 or self.bond_counts['single-right'] > 0:
+            if self.bond_counts[1, 'left'] > 0 or self.bond_counts[1, 'right'] > 0:
                 types = {bond.bond_type: bond.atom for bond in self.bonds}
-                if 'single' in types:
+                if 1 in types:
                     new_direction = None
-                    if 'single-left' in types:
+                    if (1, 'left') in types:
                         new_direction = 'right'
                     else:
                         new_direction = 'left'
 
-                    types['single-' + new_direction] = types['single']
-                    del types['single']
+                    types[1, new_direction] = types[1]
+                    del types[1]
 
                 self.bonds = [Bond(t, types[t])
-                              for t in ['single-left',
-                                        'single-right',
-                                        'double']]
+                              for t in [(1, 'left'),
+                                        (1, 'right'),
+                                        2]]
 
         self.geometry = get_geometry(self.steric_num, self.lone_pairs)
 
     def _add_hydrogen(self):
-        self.bonds.append(Bond('single', Atom(get_element(1), substituents=[Bond('single', self)])))
-        self.bond_counts['single'] += 1
+        self.bonds.append(Bond(1, Atom(get_element(1), substituents=[Bond(1, self)])))
+        self.bond_counts[1] += 1
 
     def __repr__(self):
         return 'Atom({}, tetrahedral={}, hydrogens={}, charge={})'.format(self.element.name,

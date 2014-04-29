@@ -29,13 +29,13 @@ hydrogens = (pp.Empty().setParseAction(lambda: 0) ^
               pp.Word(pp.nums).setParseAction(lambda t: int(t[0])))
             ).setResultsName('hydrogens')
 
-bond_type = (pp.Empty().setParseAction(lambda: 'single') ^
-             pp.Literal('-').setParseAction(lambda: 'single') ^
-             pp.Literal('\\').setParseAction(lambda: 'single-left') ^
-             pp.Literal('/').setParseAction(lambda: 'single-right') ^
-             pp.Literal('=').setParseAction(lambda: 'double') ^
-             pp.Literal('#').setParseAction(lambda: 'triple') ^
-             pp.Literal('$').setParseAction(lambda: 'quadruple')
+bond_type = (pp.Empty().setParseAction(lambda: 1) ^
+             pp.Literal('-').setParseAction(lambda: 1) ^
+             pp.Literal('\\').setParseAction(lambda: (1, 'left')) ^
+             pp.Literal('/').setParseAction(lambda: (1, 'right')) ^
+             pp.Literal('=').setParseAction(lambda: 2) ^
+             pp.Literal('#').setParseAction(lambda: 3) ^
+             pp.Literal('$').setParseAction(lambda: 4)
             )
 
 def parse_charge(tokens):
@@ -104,7 +104,7 @@ def construct_atom_graph(smiles_atoms, numbered_substituents, i=0, behind_bond_t
             substituent = construct_substituent(substituent, numbered_substituents)
             processed_substituents.append(substituent)
         else:
-            processed_substituents.append(chemistry.Bond('single', substituent))
+            processed_substituents.append(chemistry.Bond(1, substituent))
 
     if i < len(smiles_atoms) - 1:
         processed_substituents.append(construct_substituent(smiles_atoms, numbered_substituents, i+1))
