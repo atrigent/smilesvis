@@ -156,11 +156,11 @@ class MoleculeVisualizer:
     def draw_atom(self, atom, omit_bonds=None):
         self.draw_element(atom.element, (0, 0, 0))
 
-        for i, (bond, (bond_type, bond_atom)) in enumerate(zip(atom.geometry, atom.bonds)):
+        for i, (vec, (bond_type, bond_atom)) in enumerate(zip(atom.geometry, atom.bonds)):
             if omit_bonds and i in omit_bonds:
                 continue
 
-            self.draw_bond(Vector(0, 0, 0), bond * self.bond_length,
+            self.draw_bond(Vector(0, 0, 0), vec * self.bond_length,
                            bond_type.split('-')[0],
                            atom.plane_normal())
 
