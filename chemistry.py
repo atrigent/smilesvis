@@ -344,6 +344,7 @@ class Atom:
                         new_type = 'single-left'
 
                     types[new_type] = types['single']
+                    del types['single']
 
                 self.bonds = [Bond(t, types[t])
                               for t in ['single-left',
