@@ -128,8 +128,8 @@ class MoleculeVisualizer:
 
             atom.rotate(angle, rv)
 
-            bond_with_previous = atom.bonds[atom.find_bond_to(previous)][0]
-            if bond_with_previous.startswith('single'):
+            bond_with_previous = atom.bonds[atom.find_bond_to(previous)].order()
+            if bond_with_previous == 'single':
                 if self.randomize_single_bonds:
                     atom.rotate(random.randrange(0, 360), rotate_to)
                 else:
@@ -147,21 +147,21 @@ class MoleculeVisualizer:
                     plane_match_angle = cur_plane_normal.right_hand_rule_angle_to(prev_plane_normal, rotate_to)
                     atom.rotate(plane_match_angle, rotate_to)
 
-        for bond_type, next_atom in atom.bonds:
-            if next_atom in seen:
+        for bond in atom.bonds:
+            if bond.atom in seen:
                 continue
 
-            self.rotate_atoms(next_atom, atom, seen)
+            self.rotate_atoms(bond.atom, atom, seen)
 
     def draw_atom(self, atom, omit_bonds=None):
         self.draw_element(atom.element, (0, 0, 0))
 
-        for i, (vec, (bond_type, bond_atom)) in enumerate(zip(atom.geometry, atom.bonds)):
+        for i, (vec, bond) in enumerate(zip(atom.geometry, atom.bonds)):
             if omit_bonds and i in omit_bonds:
                 continue
 
             self.draw_bond(Vector(0, 0, 0), vec * self.bond_length,
-                           bond_type.split('-')[0],
+                           bond.order(),
                            atom.plane_normal())
 
     def draw_atoms(self, atom, cur_vector=Vector(0, 0, 0), seen=None):
@@ -175,19 +175,19 @@ class MoleculeVisualizer:
 
         hydrogen = chemistry.get_element(1)
         is_carbon = atom.element == chemistry.get_element(6)
-        omit_bonds = [i for i, (bond_type, bond_atom) in enumerate(atom.bonds)
-                        if (bond_atom in seen) or
-                           (bond_atom.element == hydrogen and
+        omit_bonds = [i for i, bond in enumerate(atom.bonds)
+                        if (bond.atom in seen) or
+                           (bond.atom.element == hydrogen and
                             is_carbon and self.hide_hydrogens)]
         self.draw_atom(atom, omit_bonds)
         gl.glPopMatrix()
 
-        for i, ((bond_type, next_atom), vec) in enumerate(zip(atom.bonds, atom.geometry)):
-            if i in omit_bonds or next_atom in seen:
+        for i, (bond, vec) in enumerate(zip(atom.bonds, atom.geometry)):
+            if i in omit_bonds or bond.atom in seen:
                 continue
 
             next_vector = cur_vector + vec * self.bond_length
-            self.draw_atoms(next_atom, next_vector, seen)
+            self.draw_atoms(bond.atom, next_vector, seen)
 
     def display(self):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)

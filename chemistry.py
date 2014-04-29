@@ -240,6 +240,18 @@ elements = [
 def get_element(num):
     return elements[num-1]
 
+class Bond:
+    def __init__(self, bond_type, atom):
+        self.bond_type = bond_type
+        self.atom = atom
+
+    def order(self):
+        return self.bond_type.split('-')[0]
+
+    def replace_atom(self, oldatom, newatom):
+        if self.atom == oldatom:
+            self.atom = newatom
+
 class Atom:
     def __init__(self, element, isotope=None, tetrahedral=None, hydrogens=None, charge=None, substituents=None):
         self.element = element
@@ -250,12 +262,11 @@ class Atom:
         self.bonds = substituents
 
         self.bond_counts = defaultdict(lambda: 0)
-        for bond_type, atom in self.bonds:
-            self.bond_counts[bond_type] += 1
+        for bond in self.bonds:
+            self.bond_counts[bond.bond_type] += 1
 
-            bond_type = bond_type.split('-')
-            if len(bond_type) > 1:
-                self.bond_counts[bond_type[0]] += 1
+            if bond.bond_type != bond.order():
+                self.bond_counts[bond.order()] += 1
 
         hybridization = None
         if self.element.hybridizations:
@@ -324,7 +335,7 @@ class Atom:
                                    'bond stereochemistry specification!')
 
             if self.bond_counts['single-left'] > 0 or self.bond_counts['single-right'] > 0:
-                types = {bond_type: atom for bond_type, atom in self.bonds}
+                types = {bond.bond_type: bond.atom for bond in self.bonds}
                 if 'single' in types:
                     new_type = None
                     if 'single-left' in types:
@@ -335,7 +346,7 @@ class Atom:
                     types[new_type] = types['single']
 
 
-                self.bonds = [(t, types[t])
+                self.bonds = [Bond(t, types[t])
                               for t in ['single-left',
                                         'single-right',
                                         'double']]
@@ -343,7 +354,7 @@ class Atom:
         self.geometry = get_geometry(self.steric_num, self.lone_pairs)
 
     def _add_hydrogen(self):
-        self.bonds.append(('single', Atom(get_element(1), substituents=[('single', self)])))
+        self.bonds.append(Bond('single', Atom(get_element(1), substituents=[Bond('single', self)])))
         self.bond_counts['single'] += 1
 
     def __repr__(self):
@@ -353,13 +364,12 @@ class Atom:
                                              repr(self.charge))
 
     def replace_bond(self, val, atom):
-        for i, (bond_type, oldval) in enumerate(self.bonds):
-            if oldval == val:
-                self.bonds[i] = (bond_type, atom)
+        for bond in self.bonds:
+            bond.replace_atom(val, atom)
 
     def find_bond_to(self, bond_val):
-        for i, (bond_type, val) in enumerate(self.bonds):
-            if val == bond_val:
+        for i, bond in enumerate(self.bonds):
+            if bond.atom == bond_val:
                 return i
 
     def rotate(self, angle, rv):

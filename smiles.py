@@ -89,7 +89,7 @@ smiles = (pp.StringStart() +
 def construct_substituent(smiles_substituent, numbered_substituents, i=0):
     cur_bond = smiles_substituent[i]
 
-    return cur_bond, construct_atom_graph(smiles_substituent, numbered_substituents, i+1, cur_bond)
+    return chemistry.Bond(cur_bond, construct_atom_graph(smiles_substituent, numbered_substituents, i+1, cur_bond))
 
 def construct_atom_graph(smiles_atoms, numbered_substituents, i=0, behind_bond_type=None):
     cur_atom = smiles_atoms[i]
@@ -97,14 +97,14 @@ def construct_atom_graph(smiles_atoms, numbered_substituents, i=0, behind_bond_t
     processed_substituents = []
 
     if behind_bond_type:
-        processed_substituents.append((behind_bond_type, 'behind'))
+        processed_substituents.append(chemistry.Bond(behind_bond_type, 'behind'))
 
     for substituent in cur_atom['substituents']:
         if not isinstance(substituent, int):
             substituent = construct_substituent(substituent, numbered_substituents)
             processed_substituents.append(substituent)
         else:
-            processed_substituents.append(('single', substituent))
+            processed_substituents.append(chemistry.Bond('single', substituent))
 
     if i < len(smiles_atoms) - 1:
         processed_substituents.append(construct_substituent(smiles_atoms, numbered_substituents, i+1))
@@ -113,11 +113,11 @@ def construct_atom_graph(smiles_atoms, numbered_substituents, i=0, behind_bond_t
 
     atom = chemistry.Atom(**cur_atom)
 
-    for bond_type, substituent in cur_atom['substituents']:
-        if isinstance(substituent, int):
-            numbered_substituents.setdefault(substituent, set()).add(atom)
-        elif not isinstance(substituent, str):
-            substituent.replace_bond('behind', atom)
+    for bond in cur_atom['substituents']:
+        if isinstance(bond.atom, int):
+            numbered_substituents.setdefault(bond.atom, set()).add(atom)
+        elif not isinstance(bond.atom, str):
+            bond.atom.replace_bond('behind', atom)
 
     return atom
 
