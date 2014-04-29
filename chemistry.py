@@ -249,13 +249,13 @@ class Atom:
         self.charge = charge
         self.bonds = substituents
 
-        self.bond_types = defaultdict(lambda: 0)
+        self.bond_counts = defaultdict(lambda: 0)
         for bond_type, atom in self.bonds:
-            self.bond_types[bond_type] += 1
+            self.bond_counts[bond_type] += 1
 
             bond_type = bond_type.split('-')
             if len(bond_type) > 1:
-                self.bond_types[bond_type[0]] += 1
+                self.bond_counts[bond_type[0]] += 1
 
         hybridization = None
         if self.element.hybridizations:
@@ -266,10 +266,10 @@ class Atom:
                 non_singles = 0
                 for bond_type in ['double', 'triple', 'quadruple']:
                     if bond_type in cur_hybrid:
-                        condition = condition and self.bond_types[bond_type] == cur_hybrid[bond_type]
+                        condition = condition and self.bond_counts[bond_type] == cur_hybrid[bond_type]
                         non_singles += cur_hybrid[bond_type]
 
-                condition = condition and self.bond_types['single'] == len(self.bonds) - non_singles
+                condition = condition and self.bond_counts['single'] == len(self.bonds) - non_singles
 
                 if condition:
                     hybridization = cur_hybrid
@@ -315,15 +315,15 @@ class Atom:
                 self.bonds[1:] = reversed(self.bonds[1:])
 
         if (self.steric_num == 3 and self.lone_pairs == 0 and
-            self.bond_types['double'] == 1 and
-            self.bond_types['single'] == 2):
+            self.bond_counts['double'] == 1 and
+            self.bond_counts['single'] == 2):
             # Deal with trigonal planar stereochemistry
 
-            if self.bond_types['single-left'] > 1 or self.bond_types['single-right'] > 1:
+            if self.bond_counts['single-left'] > 1 or self.bond_counts['single-right'] > 1:
                 raise RuntimeError('Inconsistent trigonal planar with double '
                                    'bond stereochemistry specification!')
 
-            if self.bond_types['single-left'] > 0 or self.bond_types['single-right'] > 0:
+            if self.bond_counts['single-left'] > 0 or self.bond_counts['single-right'] > 0:
                 types = {bond_type: atom for bond_type, atom in self.bonds}
                 if 'single' in types:
                     new_type = None
@@ -343,7 +343,7 @@ class Atom:
 
     def _add_hydrogen(self):
         self.bonds.append(('single', Atom(get_element(1), substituents=[('single', self)])))
-        self.bond_types['single'] += 1
+        self.bond_counts['single'] += 1
 
     def __repr__(self):
         return 'Atom({}, tetrahedral={}, hydrogens={}, charge={})'.format(self.element.name,
