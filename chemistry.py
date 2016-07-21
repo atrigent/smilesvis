@@ -357,11 +357,13 @@ class Atom:
         self.geometry = get_geometry(self.steric_num, self.lone_pairs)
 
     def _add_hydrogen(self):
-        to_self = Bond(1, self)
+        bond_type = 1
+
+        to_self = Bond(bond_type, self)
         hydrogen = Atom(get_element(1), substituents=[to_self])
 
-        self.bonds.append(Bond(1, hydrogen))
-        self.bond_counts[1] += 1
+        self.bonds.append(Bond(bond_type, hydrogen))
+        self.bond_counts[bond_type] += 1
 
     def __repr__(self):
         return 'Atom({}, tetrahedral={}, hydrogens={}, charge={})'.format(self.element.name,
